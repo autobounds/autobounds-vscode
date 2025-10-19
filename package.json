@@ -1,0 +1,77 @@
+{
+  "name": "autobounds",
+  "displayName": "Autobounds Companion",
+  "description": "Run Autobounds locally or via Docker from within VS Code.",
+  "version": "0.0.1",
+  "publisher": "autobounds",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:autobounds.runCheck",
+    "onCommand:autobounds.pullDockerImage"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "autobounds.runCheck",
+        "title": "Autobounds: Run Availability Check"
+      },
+      {
+        "command": "autobounds.pullDockerImage",
+        "title": "Autobounds: Pull Docker Image"
+      }
+    ],
+    "configuration": {
+      "title": "Autobounds",
+      "properties": {
+        "autobounds.executionMode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "local",
+            "docker"
+          ],
+          "default": "auto",
+          "description": "Choose how the extension runs Autobounds commands. Auto prefers a local binary when available."
+        },
+        "autobounds.path": {
+          "type": "string",
+          "default": "",
+          "description": "Optional absolute path to the Autobounds executable when running in local mode."
+        },
+        "autobounds.dockerImage": {
+          "type": "string",
+          "default": "autobounds/autolab:latest",
+          "description": "Docker image tag to pull and execute when Autobounds runs in docker mode."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "echo 'No tests yet'"
+  },
+  "devDependencies": {
+    "@types/node": "^18.17.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.4",
+    "@typescript-eslint/parser": "^6.7.4",
+    "eslint": "^8.51.0",
+    "typescript": "^5.2.2",
+    "@vscode/test-electron": "^2.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/autobounds/autobounds-vscode.git"
+  }
+}
