@@ -17,12 +17,53 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
       await detector.checkAvailability({ suppressPrompt: false });
     }),
+    vscode.commands.registerCommand('autobounds.sendSelectionToPythonRepl', async () => {
+      if (!detector) {
+        return;
+      }
+
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        void vscode.window.showInformationMessage('No active editor to send code from.');
+        return;
+      }
+
+      const selection = editor.selection;
+      const text = selection && !selection.isEmpty ? editor.document.getText(selection) : editor.document.lineAt(selection.active.line).text;
+
+      if (!text.trim()) {
+        void vscode.window.showInformationMessage('Nothing to send to the Autobounds Python REPL.');
+        return;
+      }
+
+      const terminal = await detector.ensurePythonRepl();
+      if (!terminal) {
+        return;
+      }
+
+      terminal.show(false);
+      terminal.sendText(text, true);
+    }),
     vscode.commands.registerCommand('autobounds.pullDockerImage', async () => {
       if (!detector) {
         return;
       }
 
       await detector.pullDockerImage();
+    }),
+    vscode.commands.registerCommand('autobounds.openPythonRepl', async () => {
+      if (!detector) {
+        return;
+      }
+
+      await detector.launchRepl('python');
+    }),
+    vscode.commands.registerCommand('autobounds.openJupyterRepl', async () => {
+      if (!detector) {
+        return;
+      }
+
+      await detector.launchRepl('jupyter');
     })
   );
 

@@ -20,10 +20,24 @@ interface LocalCheckResult {
 export class AutoboundsDetector {
   private readonly context: vscode.ExtensionContext;
   private readonly output: vscode.OutputChannel;
+  private pythonTerminal: vscode.Terminal | undefined;
+  private jupyterTerminal: vscode.Terminal | undefined;
 
   constructor(context: vscode.ExtensionContext, output: vscode.OutputChannel) {
     this.context = context;
     this.output = output;
+
+    context.subscriptions.push(
+      vscode.window.onDidCloseTerminal((terminal) => {
+        if (terminal === this.pythonTerminal) {
+          this.pythonTerminal = undefined;
+        }
+
+        if (terminal === this.jupyterTerminal) {
+          this.jupyterTerminal = undefined;
+        }
+      })
+    );
   }
 
   public dispose(): void {
@@ -144,12 +158,16 @@ export class AutoboundsDetector {
       shellArgs.push(...this.getWorkspaceMountArgs());
     }
 
+    if (kind === 'python') {
+      shellArgs.push('--entrypoint', 'python');
+    } else {
+      shellArgs.push('--entrypoint', 'jupyter');
+    }
+
     shellArgs.push(dockerImage);
 
-    if (kind === 'python') {
-      shellArgs.push('python');
-    } else {
-      shellArgs.push('jupyter', 'lab', '--no-browser', '--ip', '0.0.0.0', '--NotebookApp.token=', '--allow-root');
+    if (kind === 'jupyter') {
+      shellArgs.push('lab', '--no-browser', '--ip', '0.0.0.0', '--NotebookApp.token=', '--allow-root');
     }
 
     const terminal = vscode.window.createTerminal({
@@ -159,6 +177,12 @@ export class AutoboundsDetector {
     });
 
     terminal.show();
+
+    if (kind === 'python') {
+      this.pythonTerminal = terminal;
+    } else {
+      this.jupyterTerminal = terminal;
+    }
 
     if (kind === 'jupyter') {
       const portSetting = config.get<number>('jupyterPort', 8888);
@@ -175,6 +199,15 @@ export class AutoboundsDetector {
 
     const context = kind === 'python' ? 'Python' : 'Jupyter';
     this.output.appendLine(`[Autobounds] Starting ${context} REPL using Docker image ${dockerImage}.`);
+  }
+
+  public async ensurePythonRepl(): Promise<vscode.Terminal | undefined> {
+    if (this.pythonTerminal) {
+      return this.pythonTerminal;
+    }
+
+    await this.launchRepl('python');
+    return this.pythonTerminal;
   }
 
   private async tryLocal(command: string): Promise<LocalCheckResult> {

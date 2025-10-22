@@ -14,7 +14,10 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:autobounds.runCheck",
-    "onCommand:autobounds.pullDockerImage"
+    "onCommand:autobounds.pullDockerImage",
+    "onCommand:autobounds.openPythonRepl",
+    "onCommand:autobounds.openJupyterRepl",
+    "onCommand:autobounds.sendSelectionToPythonRepl"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -26,6 +29,25 @@
       {
         "command": "autobounds.pullDockerImage",
         "title": "Autobounds: Pull Docker Image"
+      },
+      {
+        "command": "autobounds.openPythonRepl",
+        "title": "Autobounds: Open Python REPL"
+      },
+      {
+        "command": "autobounds.openJupyterRepl",
+        "title": "Autobounds: Open Jupyter REPL"
+      },
+      {
+        "command": "autobounds.sendSelectionToPythonRepl",
+        "title": "Autobounds: Send Selection to Python REPL"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "autobounds.sendSelectionToPythonRepl",
+        "key": "shift+enter",
+        "when": "editorTextFocus && editorLangId == python"
       }
     ],
     "configuration": {
@@ -50,6 +72,17 @@
           "type": "string",
           "default": "autobounds/autolab:latest",
           "description": "Docker image tag to pull and execute when Autobounds runs in docker mode."
+        },
+        "autobounds.jupyterPort": {
+          "type": "number",
+          "default": 8888,
+          "minimum": 1,
+          "description": "Local port that maps to the Jupyter server when running the Autobounds Docker REPL."
+        },
+        "autobounds.mountWorkspace": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mount the first workspace folder into the Autobounds Docker REPL at /workspace."
         }
       }
     }
