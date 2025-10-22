@@ -6,7 +6,7 @@ Autobounds Companion streamlines how you interact with the Autobounds CLI from V
 ## Installation
 ### From a packaged release
 1. Download the latest `.vsix` artifact from the releases page or build one locally (see Development).
-2. In VS Code, open the Extensions view and use the "Install from VSIX" action.
+2. In VS Code press `Ctrl+Shift+P` (`Cmd+Shift+P` on macOS), run `Extensions: Install from VSIX...`, and pick the file you downloaded.
 3. Reload VS Code when prompted.
 
 ### From source
@@ -47,9 +47,10 @@ All settings live under the `autobounds` scope.
 ## Docker REPL Workflow
 1. Run `Autobounds: Pull Docker Image` once to ensure your image is available locally.
 2. Launch either REPL command. The extension validates Docker availability and warns if the CLI is missing.
-3. The container runs as root by default, so the extension adds `--allow-root` when starting Jupyter Lab to prevent Docker from exiting early.
-4. When starting Jupyter Lab, the extension prompts with the mapped URL so you can open it in a browser.
-5. Adjust `autobounds.jupyterPort` if the default port conflicts with another service.
+3. The extension overrides the Docker entrypoint (`python` or `jupyter`) so the expected interpreter starts even if the image defines a different default command.
+4. For Jupyter containers that run as root, the extension adds `--allow-root` to keep Jupyter Lab from exiting early.
+5. When starting Jupyter Lab, the extension prompts with the mapped URL so you can open it in a browser.
+6. Adjust `autobounds.jupyterPort` if the default port conflicts with another service.
 
 ## Output and Notifications
 The extension writes diagnostic information to the `Autobounds` Output channel. Use it to review:
@@ -74,4 +75,3 @@ Notifications appear for critical issues and include quick actions, such as pull
 
 ## Support and Feedback
 File issues or feature requests at https://github.com/autobounds/autobounds-vscode/issues. Contributions and feedback are welcome.
-
