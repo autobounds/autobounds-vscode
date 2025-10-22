@@ -110,6 +110,73 @@ export class AutoboundsDetector {
     }
   }
 
+  public async launchRepl(kind: 'python' | 'jupyter'): Promise<void> {
+    const dockerAvailable = await this.validateDocker();
+    if (!dockerAvailable) {
+      const message = 'Docker is not available. Please install Docker to run Autobounds in a container.';
+      this.output.appendLine(`[Autobounds] ${message}`);
+      void vscode.window.showErrorMessage(message);
+      return;
+    }
+
+    const config = vscode.workspace.getConfiguration('autobounds');
+    const dockerImage = config.get<string>('dockerImage', 'autobounds/autolab:latest').trim();
+    if (!dockerImage) {
+      const message = 'Cannot start Docker REPL because no Docker image is configured.';
+      this.output.appendLine(`[Autobounds] ${message}`);
+      void vscode.window.showErrorMessage(message);
+      return;
+    }
+
+    const mountWorkspace = config.get<boolean>('mountWorkspace', true);
+    const terminalName = kind === 'python' ? 'Autobounds Python REPL' : 'Autobounds Jupyter';
+    const shellArgs: string[] = ['run', '--rm'];
+
+    if (kind === 'python') {
+      shellArgs.push('-it');
+    } else {
+      const portSetting = config.get<number>('jupyterPort', 8888);
+      const port = Number.isFinite(portSetting) && portSetting > 0 ? Math.floor(portSetting) : 8888;
+      shellArgs.push('-p', `${port}:8888`);
+    }
+
+    if (mountWorkspace) {
+      shellArgs.push(...this.getWorkspaceMountArgs());
+    }
+
+    shellArgs.push(dockerImage);
+
+    if (kind === 'python') {
+      shellArgs.push('python');
+    } else {
+      shellArgs.push('jupyter', 'lab', '--no-browser', '--ip', '0.0.0.0', '--NotebookApp.token=', '--allow-root');
+    }
+
+    const terminal = vscode.window.createTerminal({
+      name: terminalName,
+      shellPath: 'docker',
+      shellArgs,
+    });
+
+    terminal.show();
+
+    if (kind === 'jupyter') {
+      const portSetting = config.get<number>('jupyterPort', 8888);
+      const port = Number.isFinite(portSetting) && portSetting > 0 ? Math.floor(portSetting) : 8888;
+
+      void vscode.window
+        .showInformationMessage(`Autobounds Jupyter REPL starting on http://localhost:${port}/lab`, 'Open in Browser')
+        .then((selection) => {
+          if (selection === 'Open in Browser') {
+            void vscode.env.openExternal(vscode.Uri.parse(`http://localhost:${port}/lab`));
+          }
+        });
+    }
+
+    const context = kind === 'python' ? 'Python' : 'Jupyter';
+    this.output.appendLine(`[Autobounds] Starting ${context} REPL using Docker image ${dockerImage}.`);
+  }
+
   private async tryLocal(command: string): Promise<LocalCheckResult> {
     try {
       const { stdout, stderr } = await execFileAsync(command, ['--version'], { timeout: 5000 });
@@ -153,6 +220,20 @@ export class AutoboundsDetector {
         }
       });
     });
+  }
+
+  private getWorkspaceMountArgs(): string[] {
+    const folders = vscode.workspace.workspaceFolders;
+    if (!folders || folders.length === 0) {
+      return [];
+    }
+
+    const workspacePath = folders[0].uri.fsPath;
+    if (!workspacePath) {
+      return [];
+    }
+
+    return ['-v', `${workspacePath}:/workspace`, '-w', '/workspace'];
   }
 
   private async promptForInstall(): Promise<void> {

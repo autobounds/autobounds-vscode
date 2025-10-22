@@ -47,8 +47,9 @@ All settings live under the `autobounds` scope.
 ## Docker REPL Workflow
 1. Run `Autobounds: Pull Docker Image` once to ensure your image is available locally.
 2. Launch either REPL command. The extension validates Docker availability and warns if the CLI is missing.
-3. When starting Jupyter Lab, the extension prompts with the mapped URL so you can open it in a browser.
-4. Adjust `autobounds.jupyterPort` if the default port conflicts with another service.
+3. The container runs as root by default, so the extension adds `--allow-root` when starting Jupyter Lab to prevent Docker from exiting early.
+4. When starting Jupyter Lab, the extension prompts with the mapped URL so you can open it in a browser.
+5. Adjust `autobounds.jupyterPort` if the default port conflicts with another service.
 
 ## Output and Notifications
 The extension writes diagnostic information to the `Autobounds` Output channel. Use it to review:
@@ -61,6 +62,7 @@ Notifications appear for critical issues and include quick actions, such as pull
 - **Local binary not found**: Confirm `autobounds` resolves on your `PATH` or set `autobounds.path` to the absolute executable.
 - **Docker unavailable**: Run `docker --version` in your terminal to verify installation. Restart Docker Desktop if needed.
 - **Jupyter REPL not reachable**: Ensure the configured port is open and not blocked by a firewall. Re-run the command after closing lingering containers.
+- **Jupyter container exits immediately**: Make sure you are running the latest extension build which starts Jupyter with `--allow-root`. Older builds may stop the container if it runs as root.
 - **Repeated install prompts**: Choose "Ignore" when prompted if you do not want further reminders. You can clear the suppression from the extension's global state via `Developer: Open Extensions Folder` and removing the stored state file.
 
 ## Developing the Extension
